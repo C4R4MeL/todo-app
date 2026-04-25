@@ -2,6 +2,51 @@
 body {
   background: #f0f2f5;
   font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;  /* ← dorong footer ke bawah */
+}
+
+/* ===== FOOTER ===== */
+footer {
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    padding: 1.25rem 0;
+    margin-top: auto;
+}
+
+.footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.footer-brand {
+    color: white;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: -0.3px;
+}
+
+.footer-brand i {
+    margin-right: 4px;
+}
+
+.footer-copy {
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 576px) {
+    .footer-inner {
+        justify-content: center;
+        text-align: center;
+    }
 }
 
 /* ===== NAVBAR ===== */
