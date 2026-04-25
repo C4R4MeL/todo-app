@@ -1,0 +1,83 @@
+/* ===== GLOBAL ===== */
+body {
+  background: #f0f2f5;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* ===== NAVBAR ===== */
+.navbar-brand {
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* ===== CARD TASK ===== */
+.task-card {
+  border-radius: 12px;
+  border-left: 5px solid #dee2e6;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.task-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1) !important;
+}
+
+.task-card.priority-high   { border-left-color: #dc3545; }
+.task-card.priority-medium { border-left-color: #ffc107; }
+.task-card.priority-low    { border-left-color: #198754; }
+.task-card.completed       { border-left-color: #adb5bd; opacity: 0.75; }
+
+/* ===== AUTH CARD ===== */
+.auth-card {
+  border-radius: 16px;
+  border: none;
+}
+
+.auth-header {
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  color: white;
+  border-radius: 16px 16px 0 0;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* ===== BADGE PRIORITAS ===== */
+.badge-priority {
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  border-radius: 20px;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  background: white;
+  border-radius: 16px;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+/* ===== STATS CARD ===== */
+.stat-card {
+  border-radius: 12px;
+  border: none;
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ===== TOMBOL ===== */
+.btn {
+  border-radius: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  border: none;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0b5ed7, #520dc2);
+  border: none;
+}
