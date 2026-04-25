@@ -79,26 +79,26 @@ function priorityBadge($priority)
 
     <!-- Statistik -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="card stat-card shadow-sm text-center p-3">
+        <div class="col-6 col-md-3" onclick="applyFilter('all')" style="cursor:pointer">
+            <div class="card stat-card shadow-sm text-center p-3" id="stat-all">
                 <div class="fs-2 fw-bold text-primary"><?= $total ?></div>
                 <div class="text-muted small">Total Task</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card stat-card shadow-sm text-center p-3">
+        <div class="col-6 col-md-3" onclick="applyFilter('pending')" style="cursor:pointer">
+            <div class="card stat-card shadow-sm text-center p-3" id="stat-pending">
                 <div class="fs-2 fw-bold text-warning"><?= $pending ?></div>
                 <div class="text-muted small">Pending</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card stat-card shadow-sm text-center p-3">
+        <div class="col-6 col-md-3" onclick="applyFilter('completed')" style="cursor:pointer">
+            <div class="card stat-card shadow-sm text-center p-3" id="stat-completed">
                 <div class="fs-2 fw-bold text-success"><?= $completed ?></div>
                 <div class="text-muted small">Selesai</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="card stat-card shadow-sm text-center p-3">
+        <div class="col-6 col-md-3" onclick="applyFilter('overdue')" style="cursor:pointer">
+            <div class="card stat-card shadow-sm text-center p-3" id="stat-overdue">
                 <div class="fs-2 fw-bold text-danger"><?= $overdue ?></div>
                 <div class="text-muted small">Terlambat</div>
             </div>
@@ -131,7 +131,9 @@ function priorityBadge($priority)
                 $isOverdue   = $task['deadline'] && $task['deadline'] < date('Y-m-d') && !$isCompleted;
                 $cardClass   = $isCompleted ? 'completed' : 'priority-' . $task['priority'];
                 ?>
-                <div class="col-md-6">
+                <div class="col-md-6 task-item"
+                    data-status="<?= $task['status'] ?>"
+                    data-overdue="<?= $isOverdue ? 'true' : 'false' ?>">
                     <div class="card task-card shadow-sm <?= $cardClass ?>">
                         <div class="card-body">
 
@@ -178,5 +180,56 @@ function priorityBadge($priority)
     <?php endif; ?>
 
 </div>
+
+<script>
+    function applyFilter(filter) {
+        const items = document.querySelectorAll('.task-item');
+
+        // Reset semua stat card
+        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+
+        // Aktifkan stat card yang diklik
+        document.getElementById('stat-' + filter)?.classList.add('active');
+
+        let visible = 0;
+        items.forEach(item => {
+            const status = item.dataset.status;
+            const overdue = item.dataset.overdue === 'true';
+
+            let show = false;
+            if (filter === 'all') show = true;
+            if (filter === 'pending' && status === 'pending' && !overdue) show = true;
+            if (filter === 'completed' && status === 'completed') show = true;
+            if (filter === 'overdue' && overdue) show = true;
+
+            if (show) {
+                item.style.display = '';
+                item.style.animation = 'fadeInCard 0.3s ease';
+                visible++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Pesan kosong
+        const old = document.getElementById('empty-filter-msg');
+        if (old) old.remove();
+
+        if (visible === 0) {
+            const labels = {
+                pending: 'pending',
+                completed: 'selesai',
+                overdue: 'terlambat'
+            };
+            const row = document.querySelector('.row.g-3:last-of-type');
+            const msg = document.createElement('div');
+            msg.id = 'empty-filter-msg';
+            msg.className = 'col-12 text-center py-4 text-muted';
+            msg.innerHTML = `<i class="bi bi-filter-circle fs-3"></i>
+                         <p class="mt-2">Tidak ada task <strong>${labels[filter]}</strong> saat ini.</p>`;
+            row.appendChild(msg);
+        }
+    }
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
