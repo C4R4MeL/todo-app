@@ -69,19 +69,14 @@ function priorityBadge($priority)
 ?>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar shadow-sm mb-4" style="background: linear-gradient(135deg, #0d6efd, #6610f2);">
     <div class="container">
-        <a class="navbar-brand" href="index.php">
+        <a class="navbar-brand text-white fw-bold" href="index.php">
             <i class="bi bi-check2-square"></i> Todo App
         </a>
-        <div class="ms-auto d-flex align-items-center gap-3">
-            <span class="text-white">
-                <i class="bi bi-person-circle"></i> <?= $_SESSION['username'] ?>
-            </span>
-            <a href="auth/logout.php" class="btn btn-outline-light btn-sm">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
-        </div>
+        <a href="auth/logout.php" class="btn btn-light btn-sm px-3">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
     </div>
 </nav>
 
