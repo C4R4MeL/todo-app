@@ -326,11 +326,9 @@ function priorityBadge($priority)
         function sortTasks(sortBy) {
             activeSort = sortBy;
 
-            // Update active style dropdown
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active-sort'));
             document.querySelector(`.sort-btn[data-sort="${sortBy}"]`)?.classList.add('active-sort');
 
-            // Update label tombol
             const labels = {
                 deadline: '<i class="bi bi-calendar-event"></i> Deadline',
                 priority: '<i class="bi bi-flag"></i> Prioritas'
@@ -343,6 +341,14 @@ function priorityBadge($priority)
             const items = Array.from(document.querySelectorAll('.task-item'));
 
             items.sort((a, b) => {
+                const aCompleted = a.dataset.status === 'completed';
+                const bCompleted = b.dataset.status === 'completed';
+
+                // Task completed selalu di bawah
+                if (aCompleted && !bCompleted) return 1;
+                if (!aCompleted && bCompleted) return -1;
+
+                // Sort normal untuk task yang sama statusnya
                 if (sortBy === 'deadline') {
                     return Number(a.dataset.deadlineTs) - Number(b.dataset.deadlineTs);
                 } else if (sortBy === 'priority') {
