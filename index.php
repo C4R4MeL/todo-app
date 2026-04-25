@@ -159,13 +159,39 @@ function priorityBadge($priority)
     </div>
 
     <!-- Header + Tombol Tambah -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h5 class="mb-0 fw-semibold">📋 Daftar Task</h5>
-        <a href="tasks/create.php" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Tambah Task
-        </a>
-    </div>
+        <div class="d-flex gap-2 align-items-center">
 
+            <!-- Dropdown Sort -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                    type="button" id="sortDropdown"
+                    data-bs-toggle="dropdown">
+                    <i class="bi bi-sort-down"></i> Sort
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                    <li>
+                        <h6 class="dropdown-header">Urutkan berdasarkan</h6>
+                    </li>
+                    <li>
+                        <button class="dropdown-item sort-btn active-sort" data-sort="deadline">
+                            <i class="bi bi-calendar-event text-primary"></i> Deadline Terdekat
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item sort-btn" data-sort="priority">
+                            <i class="bi bi-flag text-danger"></i> Prioritas Tertinggi
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <a href="tasks/create.php" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle"></i> Tambah Task
+            </a>
+        </div>
+    </div>
     <!-- Daftar Task -->
     <?php if ($total === 0): ?>
         <div class="empty-state shadow-sm">
@@ -186,7 +212,9 @@ function priorityBadge($priority)
                 ?>
                 <div class="col-md-6 task-item"
                     data-status="<?= $task['status'] ?>"
-                    data-overdue="<?= $isOverdue ? 'true' : 'false' ?>">
+                    data-overdue="<?= $isOverdue ? 'true' : 'false' ?>"
+                    data-priority="<?= $task['priority'] === 'high' ? 1 : ($task['priority'] === 'medium' ? 2 : 3) ?>"
+                    data-deadline-ts="<?= $task['deadline'] ? strtotime($task['deadline']) : 99999999999 ?>">
                     <div class="card task-card shadow-sm <?= $cardClass ?>">
                         <div class="card-body">
 
@@ -237,54 +265,127 @@ function priorityBadge($priority)
 </div>
 
 <script>
-    function applyFilter(filter) {
-        const items = document.querySelectorAll('.task-item');
-        // Reset semua stat card
-        document.querySelectorAll('.stat-card-inner').forEach(c => c.classList.remove('active'));
+    document.addEventListener('DOMContentLoaded', function() {
 
-        // Aktifkan yang diklik
-        document.getElementById('stat-' + filter)?.classList.add('active');
+        const taskContainer = document.getElementById('task-container');
+        let activeFilter = 'all';
+        let activeSort = 'deadline';
 
-        let visible = 0;
-        items.forEach(item => {
-            const status = item.dataset.status;
-            const overdue = item.dataset.overdue === 'true';
+        // ===== FILTER =====
+        function applyFilter(filter) {
+            activeFilter = filter;
 
-            let show = false;
-            if (filter === 'all') show = true;
-            if (filter === 'pending' && status === 'pending' && !overdue) show = true;
-            if (filter === 'completed' && status === 'completed') show = true;
-            if (filter === 'overdue' && overdue) show = true;
+            // Reset & aktifkan stat card
+            document.querySelectorAll('.stat-card-inner').forEach(c => c.classList.remove('active'));
+            document.getElementById('stat-' + filter)?.classList.add('active');
 
-            if (show) {
-                item.style.display = '';
-                item.style.animation = 'fadeInCard 0.3s ease';
-                visible++;
-            } else {
-                item.style.display = 'none';
+            const items = document.querySelectorAll('.task-item');
+            let visible = 0;
+
+            items.forEach(item => {
+                const status = item.dataset.status;
+                const overdue = item.dataset.overdue === 'true';
+
+                let show = false;
+                if (filter === 'all') show = true;
+                if (filter === 'pending' && status === 'pending' && !overdue) show = true;
+                if (filter === 'completed' && status === 'completed') show = true;
+                if (filter === 'overdue' && overdue) show = true;
+
+                item.style.display = show ? '' : 'none';
+                if (show) {
+                    item.style.animation = 'fadeInCard 0.3s ease';
+                    visible++;
+                }
+            });
+
+            // Pesan kosong
+            const old = document.getElementById('empty-filter-msg');
+            if (old) old.remove();
+
+            if (visible === 0 && taskContainer) {
+                const labels = {
+                    all: 'semua',
+                    pending: 'pending',
+                    completed: 'selesai',
+                    overdue: 'terlambat'
+                };
+                const msg = document.createElement('div');
+                msg.id = 'empty-filter-msg';
+                msg.className = 'col-12 text-center py-4 text-muted';
+                msg.innerHTML = `<i class="bi bi-filter-circle fs-3"></i>
+                             <p class="mt-2">Tidak ada task <strong>${labels[filter]}</strong> saat ini.</p>`;
+                taskContainer.appendChild(msg);
             }
+        }
+
+        // Stat card klik
+        window.applyFilter = applyFilter;
+
+        // ===== SORT =====
+        function sortTasks(sortBy) {
+            activeSort = sortBy;
+
+            // Update active style dropdown
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active-sort'));
+            document.querySelector(`.sort-btn[data-sort="${sortBy}"]`)?.classList.add('active-sort');
+
+            // Update label tombol
+            const labels = {
+                deadline: '<i class="bi bi-calendar-event"></i> Deadline',
+                priority: '<i class="bi bi-flag"></i> Prioritas'
+            };
+            document.getElementById('sortDropdown').innerHTML =
+                `<i class="bi bi-sort-down"></i> ${labels[sortBy]}`;
+
+            if (!taskContainer) return;
+
+            const items = Array.from(document.querySelectorAll('.task-item'));
+
+            items.sort((a, b) => {
+                if (sortBy === 'deadline') {
+                    return Number(a.dataset.deadlineTs) - Number(b.dataset.deadlineTs);
+                } else if (sortBy === 'priority') {
+                    return Number(a.dataset.priority) - Number(b.dataset.priority);
+                }
+                return 0;
+            });
+
+            items.forEach(item => taskContainer.appendChild(item));
+            setTimeout(equalizeCards, 50);
+        }
+
+        // Event klik sort
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                sortTasks(this.dataset.sort);
+            });
         });
 
-        // Pesan kosong
-        const old = document.getElementById('empty-filter-msg');
-        if (old) old.remove();
+        // Default saat load
+        sortTasks('deadline');
+        applyFilter('all');
 
-        if (visible === 0) {
-            const labels = {
-                all: 'semua',
-                pending: 'pending',
-                completed: 'selesai',
-                overdue: 'terlambat'
-            };
-            const taskContainer = document.getElementById('task-container');
-            const msg = document.createElement('div');
-            msg.id = 'empty-filter-msg';
-            msg.className = 'col-12 text-center py-4 text-muted';
-            msg.innerHTML = `<i class="bi bi-filter-circle fs-3"></i>
-                     <p class="mt-2">Tidak ada task <strong>${labels[filter]}</strong> saat ini.</p>`;
-            taskContainer.appendChild(msg);
-        }
-    }
+        // ===== EQUALIZE CARD HEIGHT =====
+        window.equalizeCards = function() {
+            const items = document.querySelectorAll('.task-item .card');
+            items.forEach(card => card.style.height = 'auto');
+            const rows = {};
+            items.forEach(card => {
+                const top = Math.round(card.getBoundingClientRect().top);
+                if (!rows[top]) rows[top] = [];
+                rows[top].push(card);
+            });
+            Object.values(rows).forEach(row => {
+                const maxH = Math.max(...row.map(c => c.offsetHeight));
+                row.forEach(card => card.style.height = maxH + 'px');
+            });
+        };
+
+        window.addEventListener('load', equalizeCards);
+        window.addEventListener('resize', equalizeCards);
+
+    });
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
