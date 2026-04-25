@@ -30,6 +30,30 @@ $overdue   = mysqli_num_rows(mysqli_query(
      AND deadline < CURDATE() AND deadline IS NOT NULL"
 ));
 
+// Greeting berdasarkan jam
+$hour = (int) date('H');
+if ($hour >= 5 && $hour < 12) {
+    $greeting = 'Selamat Pagi';
+    $greetIcon = '☀️';
+} elseif ($hour >= 12 && $hour < 15) {
+    $greeting = 'Selamat Siang';
+    $greetIcon = '🌤️';
+} elseif ($hour >= 15 && $hour < 19) {
+    $greeting = 'Selamat Sore';
+    $greetIcon = '🌅';
+} else {
+    $greeting = 'Selamat Malam';
+    $greetIcon = '🌙';
+}
+
+// Ringkasan task hari ini (deadline = hari ini)
+$today = date('Y-m-d');
+$todayTasks = mysqli_num_rows(mysqli_query(
+    $conn,
+    "SELECT id FROM tasks WHERE user_id='$user_id' 
+     AND deadline = '$today' AND status = 'pending'"
+));
+
 // Reset pointer
 mysqli_data_seek($tasks, 0);
 
@@ -77,31 +101,65 @@ function priorityBadge($priority)
         </div>
     <?php endif; ?>
 
-    <!-- Statistik -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3" onclick="applyFilter('all')" style="cursor:pointer">
-            <div class="card stat-card shadow-sm text-center p-3" id="stat-all">
-                <div class="fs-2 fw-bold text-primary"><?= $total ?></div>
-                <div class="text-muted small">Total Task</div>
+    <!-- Greeting + Statistik -->
+    <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #0d6efd, #6610f2); color: white; border-radius: 16px;">
+        <div class="card-body p-4">
+
+            <!-- Greeting -->
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                <div>
+                    <h4 class="fw-bold mb-1">
+                        <?= $greetIcon ?> <?= $greeting ?>, <?= $_SESSION['username'] ?>!
+                    </h4>
+                    <?php if ($todayTasks > 0): ?>
+                        <p class="mb-0 opacity-75">
+                            Kamu punya <strong><?= $todayTasks ?> task</strong> yang harus diselesaikan hari ini. Semangat! 💪
+                        </p>
+                    <?php elseif ($pending > 0): ?>
+                        <p class="mb-0 opacity-75">
+                            Tidak ada task jatuh tempo hari ini. Kamu punya <strong><?= $pending ?> task</strong> yang masih pending.
+                        </p>
+                    <?php else: ?>
+                        <p class="mb-0 opacity-75">
+                            Semua task sudah selesai! Kerja bagus hari ini. 🎉
+                        </p>
+                    <?php endif; ?>
+                </div>
+                <div class="text-end opacity-75 small">
+                    <?= date('l, d F Y') ?>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-3" onclick="applyFilter('pending')" style="cursor:pointer">
-            <div class="card stat-card shadow-sm text-center p-3" id="stat-pending">
-                <div class="fs-2 fw-bold text-warning"><?= $pending ?></div>
-                <div class="text-muted small">Pending</div>
+
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 1rem 0;">
+
+            <!-- Statistik -->
+            <div class="row g-3 text-center">
+                <div class="col-6 col-md-3" onclick="applyFilter('all')" style="cursor:pointer">
+                    <div class="stat-card-inner" id="stat-all">
+                        <div class="fs-2 fw-bold"><?= $total ?></div>
+                        <div class="small opacity-75">Total Task</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="applyFilter('pending')" style="cursor:pointer">
+                    <div class="stat-card-inner" id="stat-pending">
+                        <div class="fs-2 fw-bold"><?= $pending ?></div>
+                        <div class="small opacity-75">Pending</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="applyFilter('completed')" style="cursor:pointer">
+                    <div class="stat-card-inner" id="stat-completed">
+                        <div class="fs-2 fw-bold"><?= $completed ?></div>
+                        <div class="small opacity-75">Selesai</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3" onclick="applyFilter('overdue')" style="cursor:pointer">
+                    <div class="stat-card-inner" id="stat-overdue">
+                        <div class="fs-2 fw-bold"><?= $overdue ?></div>
+                        <div class="small opacity-75">Terlambat</div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="col-6 col-md-3" onclick="applyFilter('completed')" style="cursor:pointer">
-            <div class="card stat-card shadow-sm text-center p-3" id="stat-completed">
-                <div class="fs-2 fw-bold text-success"><?= $completed ?></div>
-                <div class="text-muted small">Selesai</div>
-            </div>
-        </div>
-        <div class="col-6 col-md-3" onclick="applyFilter('overdue')" style="cursor:pointer">
-            <div class="card stat-card shadow-sm text-center p-3" id="stat-overdue">
-                <div class="fs-2 fw-bold text-danger"><?= $overdue ?></div>
-                <div class="text-muted small">Terlambat</div>
-            </div>
+
         </div>
     </div>
 
@@ -124,7 +182,7 @@ function priorityBadge($priority)
             </a>
         </div>
     <?php else: ?>
-        <div class="row g-3">
+        <div class="row g-3" id="task-container">
             <?php while ($task = mysqli_fetch_assoc($tasks)): ?>
                 <?php
                 $isCompleted = $task['status'] === 'completed';
@@ -162,9 +220,11 @@ function priorityBadge($priority)
                                     <i class="bi bi-<?= $isCompleted ? 'arrow-counterclockwise' : 'check-lg' ?>"></i>
                                     <?= $isCompleted ? 'Batal' : 'Selesai' ?>
                                 </a>
-                                <a href="tasks/edit.php?id=<?= $task['id'] ?>" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-pencil"></i> Edit
-                                </a>
+                                <?php if (!$isCompleted): ?>
+                                    <a href="tasks/edit.php?id=<?= $task['id'] ?>" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                <?php endif; ?>
                                 <a href="tasks/delete.php?id=<?= $task['id'] ?>"
                                     class="btn btn-sm btn-danger"
                                     onclick="return confirm('Yakin mau hapus task ini?')">
@@ -184,11 +244,10 @@ function priorityBadge($priority)
 <script>
     function applyFilter(filter) {
         const items = document.querySelectorAll('.task-item');
-
         // Reset semua stat card
-        document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.stat-card-inner').forEach(c => c.classList.remove('active'));
 
-        // Aktifkan stat card yang diklik
+        // Aktifkan yang diklik
         document.getElementById('stat-' + filter)?.classList.add('active');
 
         let visible = 0;
@@ -217,17 +276,18 @@ function priorityBadge($priority)
 
         if (visible === 0) {
             const labels = {
+                all: 'semua',
                 pending: 'pending',
                 completed: 'selesai',
                 overdue: 'terlambat'
             };
-            const row = document.querySelector('.row.g-3:last-of-type');
+            const taskContainer = document.getElementById('task-container');
             const msg = document.createElement('div');
             msg.id = 'empty-filter-msg';
             msg.className = 'col-12 text-center py-4 text-muted';
             msg.innerHTML = `<i class="bi bi-filter-circle fs-3"></i>
-                         <p class="mt-2">Tidak ada task <strong>${labels[filter]}</strong> saat ini.</p>`;
-            row.appendChild(msg);
+                     <p class="mt-2">Tidak ada task <strong>${labels[filter]}</strong> saat ini.</p>`;
+            taskContainer.appendChild(msg);
         }
     }
 </script>

@@ -15,6 +15,11 @@ $user_id = $_SESSION['user_id'];
 // Ambil data task, pastikan milik user yang login
 $query = mysqli_query($conn, "SELECT * FROM tasks WHERE id='$id' AND user_id='$user_id'");
 $task  = mysqli_fetch_assoc($query);
+// Cegah edit task yang sudah selesai
+if ($task['status'] === 'completed') {
+    header('Location: ../index.php?error=Task yang sudah selesai tidak dapat diedit. Batalkan dulu statusnya.');
+    exit;
+}
 
 if (!$task) {
     header('Location: ../index.php');
