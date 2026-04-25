@@ -46,7 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <form method="POST">
                         <div class="mb-3">
                             <label class="form-label">Judul Task <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" placeholder="Contoh: Belajar PHP" required>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-pencil-square"></i></span>
+                                <input type="text" name="title" id="titleInput"
+                                    class="form-control <?= isset($error) && empty($_POST['title'] ?? '') ? 'is-invalid' : '' ?>"
+                                    placeholder="Contoh: Belajar PHP"
+                                    value="<?= htmlspecialchars($_POST['title'] ?? '') ?>"
+                                    oninput="checkTitle(this)">
+                                <div class="invalid-feedback" id="titleError">
+                                    <i class="bi bi-exclamation-circle"></i> Judul task wajib diisi.
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Deskripsi</label>
@@ -79,4 +89,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
+<script>
+    function checkTitle(input) {
+        const errorEl = document.getElementById('titleError');
+        if (input.value.trim() === '') {
+            input.classList.add('is-invalid');
+            input.classList.remove('is-valid');
+        } else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+        }
+    }
+
+    // Validasi saat klik submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const titleInput = document.getElementById('titleInput');
+        if (titleInput.value.trim() === '') {
+            e.preventDefault(); // tahan submit
+            titleInput.classList.add('is-invalid');
+            titleInput.focus(); // fokus ke field
+        }
+    });
+</script>
+
+<?php require_once '../includes/footer.php'; ?>
 <?php require_once '../includes/footer.php'; ?>
